@@ -111,10 +111,6 @@
                     }
                     return originalOpen.call(this, method, url, ...rest);
                 };
-                
-                let migration = document.createElement("script");
-                migration.src = "savesync.js";
-                document.body.appendChild(migration);
 
                 let index = document.createElement("script");
                 index.src = "index.js";
