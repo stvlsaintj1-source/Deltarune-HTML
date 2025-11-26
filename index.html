@@ -3,6 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Inline styles for in-page chapter iframe overlay */
+    .chapter-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .chapter-overlay iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+    .chapter-overlay .close-btn {
+      position: absolute;
+      right: 12px;
+      top: 12px;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 8px 12px;
+      font-family: sans-serif;
+      cursor: pointer;
+      z-index: 10000;
+      border-radius: 4px;
+    }
+  </style>
   <title>Deltarune</title>
 </head>
 <body>
@@ -43,9 +74,10 @@
       CHAPTERS.forEach((chapter, index) => {
         const row = document.createElement('a');
         row.className = chapter.available ? 'row' : 'disabled-row';
-        row.href = chapter.available 
-          ? `javascript:loadChapter(${chapter.number})` 
-          : `javascript:alert('Chapter ${chapter.number} coming soon!')`;
+        // Keep href inert for in-page loading; store chapter number and availability on dataset
+        row.href = '#';
+        row.dataset.chapter = chapter.number;
+        row.dataset.available = chapter.available ? '1' : '0';
         
         row.innerHTML = `
           <span class="chapter">Chapter ${chapter.number}</span>
@@ -73,12 +105,63 @@
       });
     }
 
-    // Chapter loading — navigate to the chapter page to avoid path/relative URL issues
+    // Chapter loading — load chapter in an in-page iframe overlay
     function loadChapter(chapter) {
-      // Mute background drone when actually loading a chapter
+      if (!chapter) return;
+      const chapterNum = String(chapter);
+      // If chapter is not available, notify
+      const chapObj = CHAPTERS.find(c => String(c.number) === chapterNum);
+      if (!chapObj || !chapObj.available) {
+        alert(`Chapter ${chapterNum} coming soon!`);
+        return;
+      }
+
+      // Prevent multiple loads
+      if (gameStarted) return;
+      gameStarted = true;
+
+      // Mute background drone while in-game
       audio.muted = true;
-      // Perform a full navigation so the chapter's own <base> and scripts load correctly
-      window.location.href = `chapter${chapter}/index.html`;
+
+      // Create overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'chapter-overlay';
+      overlay.id = 'chapter-overlay';
+
+      const iframe = document.createElement('iframe');
+      iframe.src = `chapter${chapterNum}/index.html`;
+      iframe.setAttribute('allow', 'fullscreen');
+      iframe.setAttribute('sandbox', 'allow-forms allow-scripts allow-same-origin allow-modals allow-popups');
+
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'close-btn';
+      closeBtn.textContent = 'Close (Esc)';
+      closeBtn.addEventListener('click', () => closeChapter());
+
+      overlay.appendChild(closeBtn);
+      overlay.appendChild(iframe);
+      document.body.appendChild(overlay);
+
+      // Focus the iframe so it receives input
+      iframe.focus();
+
+      // Allow Escape key to close the overlay
+      const escHandler = (e) => {
+        if (e.key === 'Escape') {
+          closeChapter();
+        }
+      };
+      window.addEventListener('keydown', escHandler);
+
+      // Close function removes overlay and restores menu/audio state
+      function closeChapter() {
+        const ov = document.getElementById('chapter-overlay');
+        if (ov) ov.remove();
+        gameStarted = false;
+        audio.muted = false;
+        restartAudio();
+        window.removeEventListener('keydown', escHandler);
+      }
     }
 
     // Navigation
@@ -115,8 +198,11 @@
     function activateSelected() {
       if (selectedChapter !== null) {
         const rows = document.querySelectorAll('.row');
+        const row = rows[selectedChapter];
+        if (!row) return;
         menuSelectAudio.play();
-        window.location.href = rows[selectedChapter].href;
+        const chap = row.dataset.chapter;
+        loadChapter(chap);
       }
     }
 
@@ -146,12 +232,20 @@
             if (selectedChapter !== null) {
               document.querySelectorAll('.row')[selectedChapter].classList.remove("selected");
             }
+            selectChapter(index);
           }
         });
         
-        row.addEventListener('click', () => {
+        row.addEventListener('click', (e) => {
+          e.preventDefault();
           if (!gameStarted) {
             menuSelectAudio.play();
+            const chap = row.dataset.chapter;
+            if (row.dataset.available === '1') {
+              loadChapter(chap);
+            } else {
+              alert(`Chapter ${chap} coming soon!`);
+            }
           }
         });
       });
@@ -188,5 +282,6 @@
   // Try to play audio on load
   restartAudio();
   </script>
+  <script src="savesync.js"></script>
 </body>
 </html>
