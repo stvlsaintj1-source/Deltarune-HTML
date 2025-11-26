@@ -21,7 +21,7 @@
         },
         
         // localStorage prefix for save files
-        localStoragePrefix: 'dt_save_',
+        localStoragePrefix: 'dt',
         
         // Sync intervals
         indexedDBSyncInterval: 10000, // 10 seconds
