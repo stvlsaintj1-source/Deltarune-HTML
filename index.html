@@ -51,7 +51,7 @@
         row.innerHTML = `
           <span class="chapter">Chapter ${chapter.number}</span>
           <span class="${chapter.available ? 'title' : 'disabled-title'}">${chapter.title}</span>
-          <img src="/icons/${chapter.available ? chapter.number : 0}.png">
+          <img src="icons/${chapter.available ? chapter.number : 0}.png">
         `;
         
         menu.appendChild(row);
