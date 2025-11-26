@@ -12,7 +12,7 @@
     
     const CONFIG = {
         gameId: 'dt',
-        debug: true,
+        debug: false,
         
         // IndexedDB settings
         db: {
