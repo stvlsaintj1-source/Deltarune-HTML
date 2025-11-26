@@ -62,10 +62,10 @@
     function restartAudio() {
       audio.currentTime = 0;
       audio.play().catch(err => {
-        console.log('Audio play failed:', err);
+        console.debug('Audio play failed:', err);
         // If autoplay was blocked, resume on first user interaction
         const resume = () => {
-          audio.play().catch(e => console.log('Audio resume failed:', e));
+          audio.play().catch(e => console.debug('Audio resume failed:', e));
           window.removeEventListener('click', resume);
           window.removeEventListener('keydown', resume);
         };

@@ -82,7 +82,7 @@
             if (arguments.length > 1)
               text = Array.prototype.slice.call(arguments).join(" ");
 			// for normal console
-            console.log(text);
+            console.debug(text);
             if (text === "Entering main loop.") {
               // It seems that this text ensures game is loaded.
               ensureAspectRatio();
@@ -804,13 +804,13 @@
 
       function onFirstFrameRendered()
       {
-          //console.log("First frame rendered!");
+          //console.debug("First frame rendered!");
       }
 
       function onGameSetWindowSize(width,height)
       {
           if (startingHeight === undefined && startingWidth === undefined) {
-              console.log("Initial window size set to width: " + width + ", height: " + height);
+              console.debug("Initial window size set to width: " + width + ", height: " + height);
 
               startingHeight = height;
               startingWidth = width;

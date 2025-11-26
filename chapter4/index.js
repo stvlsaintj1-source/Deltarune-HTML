@@ -82,7 +82,7 @@
             if (arguments.length > 1)
               text = Array.prototype.slice.call(arguments).join(" ");
 			// for normal console
-            console.log(text);
+            console.debug(text);
             if (text === "Entering main loop.") {
               // It seems that this text ensures game is loaded.
               ensureAspectRatio();
@@ -840,13 +840,13 @@
 
       function onFirstFrameRendered()
       {
-          //console.log("First frame rendered!");
+          //console.debug("First frame rendered!");
       }
 
       function onGameSetWindowSize(width,height)
       {
           if (startingHeight === undefined && startingWidth === undefined) {
-              console.log("Initial window size set to width: " + width + ", height: " + height);
+              console.debug("Initial window size set to width: " + width + ", height: " + height);
 
               startingHeight = height;
               startingWidth = width;
@@ -869,33 +869,33 @@
          "name": adId,                        // A descriptive name for this placement
 
          "beforeAd": () => {                  // Prepare for the ad. Mute and pause the game flow
-           console.log("beforeAd");
+           console.debug("beforeAd");
            // trigger _callback_beforeAd to game
            doGMLCallback( pCallbackBeforeAd, { id:adId } );
          },
          "afterAd" : () => {                   // Resume the game and re-enable sound
-           console.log("afterAd");
+           console.debug("afterAd");
            // trigger _callback_afterAd to game
            doGMLCallback( pCallbackAfterAd, { id:adId } );
          },
          "beforeReward": (showAdFn) => {      // Show reward prompt (call showAdFn() if clicked)
-           console.log("beforeReward");
+           console.debug("beforeReward");
            showAdFn();
            // Setup native prompt to indicate ad will load
            // Will not be setup by dev so this UX controlled by GXC
          },
          "adDismissed": () => {               // Player dismissed the ad before it finished
-           console.log("adDismissed");
+           console.debug("adDismissed");
            // trigger _callback_adDismissed to game
            doGMLCallback( pCallbackAdDismissed, { id:adId } );
          },
          "adViewed": () => {                  // Player watched the ad–give them the reward.
-           console.log("adViewed");
+           console.debug("adViewed");
            // trigger _callback_adViewed to game
            doGMLCallback( pCallbackAdViewed, { id:adId } );
          },
          "adBreakDone": (placementInfo) => {  // Always called (if provided) even if an ad didn't show
-           console.log("adBreakDone");
+           console.debug("adBreakDone");
            // trigger _callback_adBreakDone to game
            doGMLCallback( pCallbackAdBreakDone, { id:adId } );
            triggerAdPostfix( pRValueCopy );

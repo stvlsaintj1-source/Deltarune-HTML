@@ -12,7 +12,7 @@
     
     const CONFIG = {
         gameId: 'dt',
-        debug: false,
+        debug: true,
         
         // IndexedDB settings
         db: {
@@ -27,14 +27,14 @@
         indexedDBSyncInterval: 10000, // 10 seconds
         wigdosXPSyncInterval: 5000     // 5 seconds
     };
-    
+
     // ============================================================================
     // LOGGING
     // ============================================================================
     
     function log(message, data = null) {
         if (CONFIG.debug) {
-            console.log('[WigdosXP Unified Save]', message, data || '');
+            console.debug('[WigdosXP Unified Save]', message, data || '');
         }
     }
     
@@ -83,18 +83,16 @@
     function setupConsoleWrapper() {
         if (typeof console === 'undefined') return;
         
-        const _orig = console.log.bind(console);
-        console.log = function(...args) {
+        const _orig = console.debug.bind(console);
+        console.debug = function(...args) {
             try { _orig(...args); } catch (e) {}
             try {
+                // In background-save mode we do not auto-start the game.
+                // Keep console output intact but don't trigger `_startGameOnce` here.
                 if (_gameStarted) return;
                 for (const a of args) {
                     if (typeof a === 'string' && a.includes(START_MESSAGE)) {
-                        log('Detected save-ready log; starting game.');
-                        (async () => {
-                            try { if (window.loaderReadyPromise) await window.loaderReadyPromise; } catch(e){}
-                            _startGameOnce();
-                        })();
+                        log('Detected save-ready log (no auto-start in background mode).');
                         break;
                     }
                 }
@@ -333,13 +331,8 @@
                             log('✓ WigdosXP → localStorage → IndexedDB complete');
                             
                             // Start game after save data is loaded
-                            setTimeout(() => {
-                                log('Save data loaded; starting game.');
-                                (async () => {
-                                    try { if (window.loaderReadyPromise) await window.loaderReadyPromise; } catch(e){}
-                                    _startGameOnce();
-                                })();
-                            }, 500);
+                            // NOTE: running in background-save mode — do NOT auto-start the game here.
+                            log('Save data loaded; background sync complete (no auto-start).');
                         });
                         
                         window.dispatchEvent(new CustomEvent('wigdosxp-save-loaded', {
@@ -539,52 +532,31 @@
     
     // Wait for IndexedDB to be created by the game
     window.addEventListener('load', function() {
-        let attempts = 0;
-        const maxAttempts = 20;
-        
-        function tryInitialize() {
-            attempts++;
-            
-            IndexedDBSync.openDB()
-                .then(() => {
+        (async function waitForIndexedDB() {
+            log('Waiting for IndexedDB to be created by the game...');
+
+            while (true) {
+                try {
+                    await IndexedDBSync.openDB();
                     log('✓ IndexedDB found, initializing...');
-                    
+
                     // Initialize IndexedDB sync first
                     IndexedDBSync.initialize();
-                    
+
                     // Then initialize WigdosXP sync
                     WigdosXPSync.initialize();
-                    
+
                     log('✓ Unified save system initialized');
-                })
-                .catch(error => {
-                    if (attempts < maxAttempts) {
-                        log(`Waiting for IndexedDB... (${attempts}/${maxAttempts})`);
-                        setTimeout(tryInitialize, 1500);
-                    } else {
-                        console.error('IndexedDB not found after', maxAttempts, 'attempts');
-                        console.error('Last error:', error.message);
-                        
-                        // Still initialize WigdosXP sync even if IndexedDB fails
-                        WigdosXPSync.initialize();
-                    }
-                });
-        }
-        
-        // Start trying after 3 seconds
-        setTimeout(tryInitialize, 3000);
+                    break;
+                } catch (error) {
+                    // Quietly wait for the game to create the DB/store and try again
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                }
+            }
+        })();
     });
     
-    // Fallback game start timeout
-    setTimeout(() => {
-        if (!_gameStarted) {
-            log('Timeout reached; starting game as fallback.');
-            (async () => {
-                try { if (window.loaderReadyPromise) await window.loaderReadyPromise; } catch(e){}
-                _startGameOnce();
-            })();
-        }
-    }, WigdosXPSync.isInIframe ? 2000 : 1000);
+    // No fallback start: save-sync runs in background and will not auto-start the game.
     
     log('✓ Unified save system ready');
     
