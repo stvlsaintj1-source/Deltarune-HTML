@@ -2174,10 +2174,21 @@ var y = {
             }
             var e = 0,
                 f = [];
+
+            function tsToNumber(t) {
+                if (t === null || t === undefined) return NaN;
+                return (typeof t.getTime === 'function') ? t.getTime() : Number(t);
+            }
+
             Object.keys(a.entries).forEach(function (q) {
                 var u = a.entries[q],
                     w = b.entries[q];
-                w && u.timestamp.getTime() == w.timestamp.getTime() || (f.push(q), e++)
+                var ut = u ? tsToNumber(u.timestamp) : NaN;
+                var wt = w ? tsToNumber(w.timestamp) : NaN;
+                if (!(w && ut === wt)) {
+                    f.push(q);
+                    e++;
+                }
             });
             var g = [];
             Object.keys(b.entries).forEach(function (q) {
@@ -6235,7 +6246,8 @@ var Gi = {
             if (2 > a || 3 < a) return R = 12293, 0;
             xe.Pj = a - 1;
             xe.Fl = 0;
-            ze = he(k.canvas, xe);
+            var __canvas_for_he = k.canvas || (typeof document !== 'undefined' && document.querySelector ? document.querySelector('canvas') : null) || null;
+            ze = __canvas_for_he ? he(__canvas_for_he, xe) : 0;
             if (0 != ze) return R = 12288, je(ze), k.Ql = !0, ce.forEach(function (e) {
                 e()
             }), je(null), 62004;
