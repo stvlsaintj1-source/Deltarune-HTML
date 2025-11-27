@@ -5329,11 +5329,13 @@ function oi(a, b, c, d) {
         f || (f = G[a + 8 >> 2]);
         var g = f ? x(v, f) : "";
         try {
+            console.debug('[Runner FILES] put -> key:', g, 'size:', (b && (b.byteLength||b.length)) || 0, 'type:', b && b.constructor && b.constructor.name);
             var h = e.transaction(["FILES"], "readwrite").objectStore("FILES").put(b, g);
             h.onsuccess = () => {
                 D[a + 40 >> 1] = 4;
                 D[a + 42 >> 1] = 200;
                 t("OK", v, a + 44, 64);
+                console.debug('[Runner FILES] put succeeded ->', g);
                 c(a, 0, g)
             };
             h.onerror = n => {
@@ -5359,6 +5361,7 @@ function pi(a, b, c) {
             f.onsuccess = g => {
                 if (g.target.result) {
                     g = g.target.result;
+                    console.debug('[Runner FILES] get -> key:', e, 'size:', (g.byteLength||g.length) || 0, 'type:', g && g.constructor && g.constructor.name);
                     var h = g.byteLength || g.length,
                         n = m(h);
                     v.set(new Uint8Array(g), n);
